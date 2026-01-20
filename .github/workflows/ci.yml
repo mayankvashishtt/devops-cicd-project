@@ -23,7 +23,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          build-mode: autoclean
+          build-mode: autobuild
       
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -63,6 +63,7 @@ jobs:
         continue-on-error: true
       
       - name: Upload Dependency Check Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
@@ -96,33 +97,29 @@ jobs:
         with:
           image-ref: devops-demo:${{ github.sha }}
           format: 'table'
-          exit-code: '0' # Don't fail build for demo purposes, but in prod set to 1 for Critical
+          exit-code: '0' 
           severity: 'CRITICAL,HIGH'
       
       - name: Run Container Smoke Test
         run: |
           docker run -d --name test-container -p 8080:8080 devops-demo:${{ github.sha }}
           # Wait for container to start
-          sleep 10
+          sleep 15
           # Check health
           curl --fail http://localhost:8080/ || exit 1
           docker stop test-container
           docker rm test-container
       
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
+        if: github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME != ''
         uses: docker/login-action@v3
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
       - name: Push to DockerHub
-        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
+        if: github.event_name != 'pull_request' && secrets.DOCKERHUB_USERNAME != ''
         uses: docker/build-push-action@v5
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         with:
           context: devops
           push: true
