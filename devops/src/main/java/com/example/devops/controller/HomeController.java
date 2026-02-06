@@ -10,4 +10,18 @@ public class HomeController {
     public String home() {
         return "Welcome to the DevOps CI/CD Project!";
     }
+
+
+    @GetMapping("/hello")
+    public String hello(){
+        return "Welcome to the DevOps CI/CD Project!";
+
+
+    }
+
+
+
+
+
 }
+
